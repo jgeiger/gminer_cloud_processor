@@ -1,7 +1,4 @@
-require 'httparty'
-require 'lib/crowd'
-require 'lib/ncbo_service'
-require 'lib/ncbo_exception'
+require File.dirname(__FILE__) + '/support/setup'
 
 class Processor < CloudCrowd::Action
 

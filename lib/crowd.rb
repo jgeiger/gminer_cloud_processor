@@ -5,9 +5,9 @@ class Crowd
   class << self
 
     def submit(action, params)
-      host = 'http://localhost:9173/jobs'
+      jobs_url = "#{CloudCrowd.config[:central_server]}/jobs"
       body = {:job => { 'action' => action, 'inputs' => [params] }.to_json}
-      post(host, :body => body)
+      post(jobs_url, :body => body)
     end
 
   end # of self
