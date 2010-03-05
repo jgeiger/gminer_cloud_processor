@@ -9,15 +9,15 @@ class Processor < CloudCrowd::Action
   def process_job(params)
     Crowd.submit('scheduler', {'command' => 'working', 'job_id' => params['job_id'], 'time' => Time.now.to_f})
     # params = {'job_id' => job.id, 'geo_accession' => job.geo_accession, 'field' => job.field, 'value' => item.send(job.field), 'description' => item.descriptive_text, 'ncbo_id' => ncbo_id, 'stopwords' => stopwords}
-    create_for(params['geo_accession'], params['field'], params['value'], params['description'], params['ncbo_id'], params['stopwords'])
+    create_for(params['geo_accession'], params['field'], params['value'], params['description'], params['ncbo_id'], params['stopwords'], params['email'])
     Crowd.submit('scheduler', {'command' => 'finished', 'job_id' => params['job_id'], 'time' => Time.now.to_f})
     rescue NCBOException => ex
       Crowd.submit('scheduler', {'command' => 'failed', 'job_id' => params['job_id']})
   end
 
-  def create_for(geo_accession, field_name, field_value, description, ncbo_id, stopwords)
+  def create_for(geo_accession, field_name, field_value, description, ncbo_id, stopwords, email)
     cleaned = field_value.gsub(/[\r\n]+/, " ")
-    hash = NCBOService.result_hash(cleaned, stopwords, ncbo_id)
+    hash = NCBOService.result_hash(cleaned, stopwords, email, ncbo_id)
     process_ncbo_results(hash, geo_accession, field_name, description, ncbo_id)
   end
 

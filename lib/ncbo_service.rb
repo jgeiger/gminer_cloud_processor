@@ -19,9 +19,10 @@ class NCBOService
       end
     end
 
-    def get_data(text, stopwords, ncbo_ontology_id=nil)
+    def get_data(text, stopwords, email, ncbo_ontology_id=nil)
       retried = false
       parameters = {
+        'email' => email,
         "longestOnly" => "false",
         "wholeWordOnly" => "true",
         "stopWords" => stopwords,
@@ -54,8 +55,8 @@ class NCBOService
       end
     end
 
-    def result_hash(text, stopwords, ncbo_ontology_id)
-      result = NCBOService.get_data(text, stopwords, ncbo_ontology_id)
+    def result_hash(text, stopwords, email, ncbo_ontology_id)
+      result = NCBOService.get_data(text, stopwords, email, ncbo_ontology_id)
       if result && result['success']
         annotations = result['success']['data']['annotatorResultBean']['annotations']
         return NCBOService.generate_hash(annotations)
