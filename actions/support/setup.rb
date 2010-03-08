@@ -18,4 +18,5 @@ end
 require 'lib/crowd'
 
 if CloudCrowd.node?
+  puts CloudCrowd.actions
 end
