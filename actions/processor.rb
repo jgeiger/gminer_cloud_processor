@@ -2,10 +2,12 @@ require File.dirname(__FILE__) + '/support/setup'
 
 class Processor < CloudCrowd::Action
 
-  attr_accessor :work_units
+  attr_accessor :terms, :annotations, :closures
 
   def process
-    @work_units = []
+    @terms = []
+    @annotations = []
+    @closures = []
     process_task(input)
   end
 
@@ -23,7 +25,9 @@ class Processor < CloudCrowd::Action
     hash = NCBOService.result_hash(cleaned, stopwords, email, ncbo_id)
     process_ncbo_results(hash, geo_accession, field_name, description, ncbo_id)
     send_work_units
-    @work_units = []
+    @terms = []
+    @annotations = []
+    @closures = []
   end
 
   def process_ncbo_results(hash, geo_accession, field_name, description, ncbo_id)
@@ -56,23 +60,21 @@ class Processor < CloudCrowd::Action
   end
 
   def save_term(params)
-    databaser_work_unit({'command' => 'saveterm'}.merge!(params))
+     @terms << {'command' => 'saveterm'}.merge!(params)
   end
 
   def save_annotation(params)
-    databaser_work_unit({'command' => 'saveannotation'}.merge!(params))
+    @annotations << {'command' => 'saveannotation'}.merge!(params)
   end
 
   def save_closure(params)
-    databaser_work_unit({'command' => 'saveclosure'}.merge!(params))
-  end
-
-  def databaser_work_unit(msg)
-    work_units << msg
+    @closures << {'command' => 'saveclosure'}.merge!(params)
   end
 
   def send_work_units
-    Crowd.submit('databaser', work_units)
+    Crowd.submit('databaser', terms)
+    Crowd.submit('databaser', annotations)
+    Crowd.submit('databaser', closures)
   end
 
 end
