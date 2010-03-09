@@ -70,9 +70,9 @@ class Processor < CloudCrowd::Action
   end
 
   def send_work_units
-    Crowd.submit('databaser', terms)
-    Crowd.submit('databaser', annotations)
-    Crowd.submit('databaser', closures)
+    Crowd.submit('databaser', terms) if terms.any?
+    Crowd.submit('databaser', annotations) if annotations.any?
+    Crowd.submit('databaser', closures) if closures.any?
   end
 
 end
