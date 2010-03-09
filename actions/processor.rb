@@ -2,23 +2,28 @@ require File.dirname(__FILE__) + '/support/setup'
 
 class Processor < CloudCrowd::Action
 
+  attr_accessor :work_units
+
   def process
-    process_job(input)
+    @work_units = []
+    process_task(input)
   end
 
-  def process_job(params)
-    Crowd.submit('scheduler', {'command' => 'working', 'job_id' => params['job_id'], 'time' => Time.now.to_f})
-    # params = {'job_id' => job.id, 'geo_accession' => job.geo_accession, 'field' => job.field, 'value' => item.send(job.field), 'description' => item.descriptive_text, 'ncbo_id' => ncbo_id, 'stopwords' => stopwords}
+  def process_task(params)
+    Crowd.submit('scheduler', {'command' => 'working', 'task_id' => params['task_id'], 'time' => Time.now.to_f})
+    # params = {'task_id' => task.id, 'geo_accession' => task.geo_accession, 'field' => task.field, 'value' => item.send(task.field), 'description' => item.descriptive_text, 'ncbo_id' => ncbo_id, 'stopwords' => stopwords}
     create_for(params['geo_accession'], params['field'], params['value'], params['description'], params['ncbo_id'], params['stopwords'], params['email'])
-    Crowd.submit('scheduler', {'command' => 'finished', 'job_id' => params['job_id'], 'time' => Time.now.to_f})
+    Crowd.submit('scheduler', {'command' => 'finished', 'task_id' => params['task_id'], 'time' => Time.now.to_f})
     rescue NCBOException => ex
-      Crowd.submit('scheduler', {'command' => 'failed', 'job_id' => params['job_id']})
+      Crowd.submit('scheduler', {'command' => 'failed', 'task_id' => params['task_id'], 'exception' => ex.message})
   end
 
   def create_for(geo_accession, field_name, field_value, description, ncbo_id, stopwords, email)
     cleaned = field_value.gsub(/[\r\n]+/, " ")
     hash = NCBOService.result_hash(cleaned, stopwords, email, ncbo_id)
     process_ncbo_results(hash, geo_accession, field_name, description, ncbo_id)
+    send_work_units
+    @work_units = []
   end
 
   def process_ncbo_results(hash, geo_accession, field_name, description, ncbo_id)
@@ -51,19 +56,23 @@ class Processor < CloudCrowd::Action
   end
 
   def save_term(params)
-    databaser_message({'command' => 'saveterm'}.merge!(params))
+    databaser_work_unit({'command' => 'saveterm'}.merge!(params))
   end
 
   def save_annotation(params)
-    databaser_message({'command' => 'saveannotation'}.merge!(params))
+    databaser_work_unit({'command' => 'saveannotation'}.merge!(params))
   end
 
   def save_closure(params)
-    databaser_message({'command' => 'saveclosure'}.merge!(params))
+    databaser_work_unit({'command' => 'saveclosure'}.merge!(params))
   end
 
-  def databaser_message(msg)
-    Crowd.submit('databaser', msg)
+  def databaser_work_unit(msg)
+    work_units << msg
+  end
+
+  def send_work_units
+    Crowd.submit('databaser', work_units)
   end
 
 end
